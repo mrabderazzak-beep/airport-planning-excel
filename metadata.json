@@ -1,0 +1,5 @@
+{
+  "name": "Airport Planning Excel",
+  "description": "A dual-interface application for Airport Admin (Excel edition) and Agents (Read-only schedule view).",
+  "requestFramePermissions": []
+}
