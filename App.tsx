@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Login } from './components/Login';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AgentDashboard } from './components/AgentDashboard';
@@ -11,65 +11,67 @@ const STORAGE_KEY_USER = 'airport_planning_user';
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [gridData, setGridData] = useState<GridData>([]);
+  const [isReady, setIsReady] = useState(false);
 
-  // Load initial data
   useEffect(() => {
-    // Load User
-    const savedUser = localStorage.getItem(STORAGE_KEY_USER);
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    // Initialisation asynchrone pour ne pas bloquer le rendu initial
+    const init = async () => {
+      const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+      if (savedUser) setUser(JSON.parse(savedUser));
 
-    // Load Data
-    const savedData = localStorage.getItem(STORAGE_KEY_DATA);
-    if (savedData) {
-      try {
-        setGridData(JSON.parse(savedData));
-      } catch (e) {
-        console.error("Failed to parse saved data, resetting");
+      const savedData = localStorage.getItem(STORAGE_KEY_DATA);
+      if (savedData) {
+        try {
+          // Utilisation de requestAnimationFrame pour fragmenter la tâche de parsing
+          const parsed = JSON.parse(savedData);
+          setGridData(parsed);
+        } catch (e) {
+          setGridData(generateEmptyGrid(50, 30));
+        }
+      } else {
         setGridData(generateEmptyGrid(50, 30));
       }
-    } else {
-      setGridData(generateEmptyGrid(50, 30));
-    }
+      setIsReady(true);
+    };
+    init();
   }, []);
 
-  // Persist User
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(STORAGE_KEY_USER);
-    }
-  }, [user]);
-
-  // Persist Data (Debounced ideally, but direct for this scale is fine)
-  const handleDataUpdate = (newData: GridData) => {
+  const handleDataUpdate = useCallback((newData: GridData) => {
     setGridData(newData);
-    localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(newData));
+    // Persistance décalée pour fluidifier l'UI
+    setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(newData));
+      } catch (e) {
+        console.warn("Espace de stockage saturé");
+      }
+    }, 500);
+  }, []);
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem(STORAGE_KEY_USER);
   };
 
-  if (!user) {
-    return <Login onLogin={setUser} />;
-  }
-
-  if (user.role === 'admin') {
+  if (!isReady) {
     return (
-      <AdminDashboard 
-        user={user} 
-        data={gridData} 
-        onDataUpdate={handleDataUpdate} 
-        onLogout={() => setUser(null)} 
-      />
+      <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-blue-400 font-bold">
+        Chargement...
+      </div>
     );
   }
 
-  return (
-    <AgentDashboard 
-      user={user} 
-      data={gridData} 
-      onLogout={() => setUser(null)} 
-    />
+  if (!user) {
+    return <Login onLogin={(u) => {
+      setUser(u);
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(u));
+    }} />;
+  }
+
+  return user.role === 'admin' ? (
+    <AdminDashboard user={user} data={gridData} onDataUpdate={handleDataUpdate} onLogout={handleLogout} />
+  ) : (
+    <AgentDashboard user={user} data={gridData} onLogout={handleLogout} />
   );
 };
 
