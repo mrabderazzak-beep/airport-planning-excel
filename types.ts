@@ -1,39 +1,45 @@
 
-export type UserRole = 'admin' | 'agent' | null;
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  AGENT = 'AGENT',
+  GUEST = 'GUEST'
+}
 
-export interface User {
-  role: UserRole;
+export interface CellMerge {
+  s: { r: number; c: number }; // Start row, col
+  e: { r: number; c: number }; // End row, col
+}
+
+export interface PlanningData {
+  id: string;
   name: string;
-  searchTerm?: string; // For agents auto-search
+  uploadDate: string;
+  rows: any[][];
+  merges: CellMerge[];
+  headers: string[];
 }
 
-export interface CellData {
-  value: string;
-  width?: number; // Width in pixels
-  height?: number; // Height in pixels
-  rowSpan?: number;
-  colSpan?: number;
-  hidden?: boolean; // If true, this cell is part of a merge and shouldn't be rendered
-  
-  // Styles
-  color?: string; // Background color (hex)
-  textColor?: string; // Text color (hex)
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  align?: 'left' | 'center' | 'right';
-  valign?: 'top' | 'center' | 'bottom';
+export interface AuthState {
+  role: UserRole;
+  matricule?: string;
+  isAuthenticated: boolean;
 }
 
-export type GridData = CellData[][];
-
-export type GridSelection = 
-  | { type: 'cell', row: number, col: number }
-  | { type: 'row', row: number }
-  | { type: 'col', col: number }
-  | { type: 'range', startRow: number, startCol: number, endRow: number, endCol: number };
-
-export interface ExcelStats {
-  rows: number;
-  cols: number;
+export interface AppTranslation {
+  loginTitle: string;
+  adminPassword: string;
+  agentMatricule: string;
+  loginButton: string;
+  uploadTitle: string;
+  historyTitle: string;
+  noData: string;
+  searchPlaceholder: string;
+  zoomIn: string;
+  zoomOut: string;
+  logout: string;
+  delete: string;
+  errorMatricule: string;
+  smartAudit: string;
+  lastUpdated: string;
+  shiftInfo: string;
 }

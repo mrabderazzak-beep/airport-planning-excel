@@ -1,5 +1,5 @@
 {
-  "name": "Airport Planning Excel",
-  "description": "A dual-interface application for Airport Admin (Excel edition) and Agents (Read-only schedule view).",
+  "name": "Excel Planning Hub",
+  "description": "A professional planning management system that replicates Excel structure for administrators and agents with high visual fidelity and automated history management.",
   "requestFramePermissions": []
 }
